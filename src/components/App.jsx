@@ -15,9 +15,13 @@ export class App extends Component {
     search: '',
     currentPage: 1,
     currentImage: '',
+    currentScoreImages: 0,
+    totalHits: 0,
     status: 'idle',
     showModal: false,
   };
+
+  imagesPerPage = 12;
 
   async componentDidMount() {
     try {
@@ -25,9 +29,14 @@ export class App extends Component {
 
       const { search } = this.state;
 
-      const images = await fetchImages(search);
+      const { hits, totalHits } = await fetchImages(search);
 
-      this.setState({ images, status: 'resolve' });
+      this.setState({
+        images: hits,
+        currentScoreImages: this.imagesPerPage,
+        totalHits,
+        status: 'resolve',
+      });
     } catch (error) {
       this.setState({ status: 'reject' });
       toast.error('ooops something went wrong');
@@ -41,23 +50,34 @@ export class App extends Component {
       const PrevPage = prevState.currentPage;
 
       if (prevSearch !== search) {
-        this.setState({ status: 'pending' });
-        const images = await fetchImages(search);
+        this.setState({
+          status: 'pending',
+          currentPage: 1,
+          currentScoreImages: 0,
+        });
 
-        this.setState({ images, status: 'resolve' });
+        const { hits, totalHits } = await fetchImages(search);
 
-        if (images.length === 0) {
+        this.setState({
+          images: hits,
+          currentScoreImages: this.imagesPerPage,
+          totalHits,
+          status: 'resolve',
+        });
+
+        if (hits.length === 0) {
           toast.info(`on request ${search} Nothing found`);
         }
       }
 
-      if (PrevPage !== currentPage) {
+      if (PrevPage !== currentPage && currentPage !== 1) {
         this.setState({ status: 'pending' });
 
-        const images = await fetchImages(search, currentPage);
+        const { hits } = await fetchImages(search, currentPage);
 
         this.setState(prevState => ({
-          images: [...prevState.images, ...images],
+          images: [...prevState.images, ...hits],
+          currentScoreImages: prevState.currentScoreImages + this.imagesPerPage,
           status: 'resolve',
         }));
       }
@@ -86,8 +106,15 @@ export class App extends Component {
   };
 
   render() {
-    const { images, status, showModal, currentImage } = this.state;
-    const hasImages = images.length;
+    const {
+      images,
+      status,
+      showModal,
+      currentImage,
+      currentScoreImages,
+      totalHits,
+    } = this.state;
+
     return (
       <AppWrap>
         <Searchbar onSubmit={this.handleSearchValue} />
@@ -95,7 +122,7 @@ export class App extends Component {
 
         {status === 'pending' && <Loader />}
 
-        {hasImages !== 0 && status === 'resolve' && (
+        {status === 'resolve' && currentScoreImages < totalHits && (
           <Button onClick={this.handleNextPageClick} />
         )}
 
