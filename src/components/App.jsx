@@ -21,8 +21,6 @@ export class App extends Component {
     showModal: false,
   };
 
-  imagesPerPage = 12;
-
   async componentDidMount() {
     try {
       this.setState({ status: 'pending' });
@@ -33,7 +31,6 @@ export class App extends Component {
 
       this.setState({
         images: hits,
-        currentScoreImages: this.imagesPerPage,
         totalHits,
         status: 'resolve',
       });
@@ -60,7 +57,6 @@ export class App extends Component {
 
         this.setState({
           images: hits,
-          currentScoreImages: this.imagesPerPage,
           totalHits,
           status: 'resolve',
         });
@@ -77,7 +73,6 @@ export class App extends Component {
 
         this.setState(prevState => ({
           images: [...prevState.images, ...hits],
-          currentScoreImages: prevState.currentScoreImages + this.imagesPerPage,
           status: 'resolve',
         }));
       }
@@ -106,14 +101,8 @@ export class App extends Component {
   };
 
   render() {
-    const {
-      images,
-      status,
-      showModal,
-      currentImage,
-      currentScoreImages,
-      totalHits,
-    } = this.state;
+    const { images, status, showModal, currentImage, totalHits } = this.state;
+    const currentScoreImages = images.length;
 
     return (
       <AppWrap>
